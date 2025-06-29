@@ -83,7 +83,7 @@ class ProductDialog(tk.Toplevel):
         frame.pack(fill="both", expand=True)
 
         # --- Formulario ---
-        fields = ["SKU", "Nombre", "Descripción", "Precio Venta", "Stock"]
+        fields = ["Nombre", "Descripción", "Precio Venta", "Stock"]
         self.entries = {}
         for i, field in enumerate(fields):
             ttk.Label(frame, text=f"{field}:").grid(row=i, column=0, sticky="w", pady=2)
@@ -92,8 +92,6 @@ class ProductDialog(tk.Toplevel):
             self.entries[field] = entry
 
         if self.is_edit_mode:
-            self.entries["SKU"].insert(0, self.producto[0])
-            self.entries["SKU"].config(state="readonly")
             self.entries["Nombre"].insert(0, self.producto[1])
             self.entries["Descripción"].insert(0, self.producto[2])
             self.entries["Precio Venta"].insert(0, self.producto[3].replace('$', ''))
@@ -103,31 +101,12 @@ class ProductDialog(tk.Toplevel):
         btn_frame = ttk.Frame(frame)
         btn_frame.grid(row=len(fields), column=0, columnspan=2, pady=10)
         ttk.Button(btn_frame, text="Guardar", command=self.guardar).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="Cancelar", command=self.destroy).pack(side="left", padx=5)
 
     def guardar(self):
-        try:
-            sku = self.entries["SKU"].get()
-            nombre = self.entries["Nombre"].get()
-            descripcion = self.entries["Descripción"].get()
-            precio = float(self.entries["Precio Venta"].get())
-            stock = int(self.entries["Stock"].get())
-
-            if not all([sku, nombre, precio, stock]):
-                messagebox.showerror("Campos Vacíos", "SKU, Nombre, Precio y Stock son requeridos.", parent=self)
-                return
-        except ValueError:
-            messagebox.showerror("Dato Inválido", "Precio y Stock deben ser números válidos.", parent=self)
-            return
-
-        if self.is_edit_mode:
-            database.actualizar_producto(sku, nombre, descripcion, precio, stock)
-            messagebox.showinfo("Éxito", "Producto actualizado correctamente.", parent=self.master)
-        else:
-            if database.agregar_producto(sku, nombre, descripcion, precio, stock):
-                messagebox.showinfo("Éxito", "Producto añadido correctamente.", parent=self.master)
-            else:
-                messagebox.showerror("Error", "El SKU ya existe. Por favor, use uno diferente.", parent=self)
-                return # No cerrar la ventana si hay error
-
+        nombre = self.entries["Nombre"].get()
+        descripcion = self.entries["Descripción"].get()
+        precio = float(self.entries["Precio Venta"].get())
+        stock = int(self.entries["Stock"].get())
+        # Llama la función sin SKU
+        database.agregar_producto(nombre, descripcion, precio, stock)
         self.destroy()

@@ -1,9 +1,17 @@
 import sqlite3
 import hashlib
 import json
+import random
+import string
 from datetime import datetime
 
 DB_NAME = 'citrus_tech.db'
+
+def generar_sku():
+    # Ejemplo: SKU-ABC123
+    letters = ''.join(random.choices(string.ascii_uppercase, k=3))
+    numbers = ''.join(random.choices(string.digits, k=3))
+    return f"SKU-{letters}{numbers}"
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -61,18 +69,33 @@ def verificar_usuario(username, password):
     conn.close()
     return user
 
-def agregar_producto(sku, nombre, descripcion, precio, stock):
+def agregar_producto(nombre, descripcion, precio, stock):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO productos (sku, nombre, descripcion, precio_venta, stock) VALUES (?, ?, ?, ?, ?)",
-                       (sku, nombre, descripcion, precio, stock))
+        sku = generar_sku()
+        cursor.execute(
+            "INSERT INTO productos (sku, nombre, descripcion, precio_venta, stock) VALUES (?, ?, ?, ?, ?)",
+            (sku, nombre, descripcion, precio, stock)
+        )
         conn.commit()
-        return True
+        return cursor.lastrowid
     except sqlite3.IntegrityError:
         return False
     finally:
         conn.close()
+
+"""        # Actualiza el SKU generado
+        cursor.execute(
+            "UPDATE productos SET sku = ? WHERE id_producto = ?",
+            (sku, nuevo_id)
+        )
+        conn.commit()
+        return nuevo_id
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()"""
 
 def obtener_productos(query=""):
     conn = sqlite3.connect(DB_NAME)
