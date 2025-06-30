@@ -66,7 +66,7 @@ class SalesView(ttk.Frame):
             self.products_tree.delete(i)
         productos = database.obtener_productos()
         for p in productos:
-            self.products_tree.insert("", "end", values=(p[0], p[1], f"${p[3]:.2f}", p[4]))
+            self.products_tree.insert("", "end", values=(p[0], p[1], f"${float(p[3]):.2f}", p[4]))
 
     def filtrar_productos_tree(self, *args):
         query = self.search_var.get()

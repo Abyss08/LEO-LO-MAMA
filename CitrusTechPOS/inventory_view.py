@@ -18,11 +18,15 @@ class InventoryView(ttk.Frame):
         tree_frame = ttk.Frame(self)
         tree_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        self.tree = ttk.Treeview(tree_frame, columns=("sku", "nombre", "descripcion", "precio", "stock"), show='headings')
+        self.tree = ttk.Treeview(
+            self, 
+            columns=("id_producto", "sku", "nombre", "descripcion", "precio", "stock"), 
+            show="headings")
+        self.tree.heading("id_producto", text="ID")
         self.tree.heading("sku", text="SKU")
-        self.tree.heading("nombre", text="Nombre del Producto")
+        self.tree.heading("nombre", text="Nombre")
         self.tree.heading("descripcion", text="Descripción")
-        self.tree.heading("precio", text="Precio Venta")
+        self.tree.heading("precio", text="Precio")
         self.tree.heading("stock", text="Stock")
 
         self.tree.column("sku", width=100)
@@ -39,7 +43,10 @@ class InventoryView(ttk.Frame):
             self.tree.delete(i)
         productos = database.obtener_productos()
         for p in productos:
-            self.tree.insert("", "end", values=(p[0], p[1], p[2], f"${p[3]:.2f}", p[4]))
+            # p[0]=id_producto, p[1]=sku, p[2]=nombre, p[3]=descripcion, p[4]=precio, p[5]=stock
+            self.tree.insert(
+                "", "end", 
+                values=(p[0], p[1], p[2], p[3], f"${p[4]:.2f}", p[5]))
 
     def abrir_dialogo_producto(self, producto_a_editar=None):
         dialog = ProductDialog(self, producto_a_editar)
@@ -51,8 +58,18 @@ class InventoryView(ttk.Frame):
         if not selected_item:
             messagebox.showwarning("Sin Selección", "Por favor, seleccione un producto para editar.", parent=self)
             return
+
         item_values = self.tree.item(selected_item, 'values')
-        self.abrir_dialogo_producto(item_values)
+        # item_values: (id_producto, sku, nombre, descripcion, precio, stock)
+        producto_a_editar = (
+            item_values[0],  # id_producto
+            item_values[1],  # sku
+            item_values[2],  # nombre
+            item_values[3],  # descripcion
+            float(item_values[4].replace('$', '')),  # precio (elimina el $ si existe)
+            int(item_values[5])  # stock
+        )
+        self.abrir_dialogo_producto(producto_a_editar)
 
     def eliminar_producto_seleccionado(self):
         selected_item = self.tree.focus()
@@ -60,11 +77,11 @@ class InventoryView(ttk.Frame):
             messagebox.showwarning("Sin Selección", "Por favor, seleccione un producto para eliminar.", parent=self)
             return
 
-        sku = self.tree.item(selected_item, 'values')[0]
-        nombre = self.tree.item(selected_item, 'values')[1]
-
-        if messagebox.askyesno("Confirmar Eliminación", f"¿Está seguro de que desea eliminar '{nombre}' (SKU: {sku}) del inventario?", parent=self):
-            database.eliminar_producto(sku)
+        id_producto = self.tree.item(selected_item, 'values')[0]  # Ahora es el ID
+        nombre = self.tree.item(selected_item, 'values')[2]
+        
+        if messagebox.askyesno("Confirmar Eliminación", f"¿Está seguro de que desea eliminar '{nombre}' (ID: {id_producto}) del inventario?", parent=self):
+            database.eliminar_producto_por_id(id_producto)
             self.cargar_productos()
             messagebox.showinfo("Éxito", "Producto eliminado correctamente.", parent=self)
 
@@ -92,10 +109,10 @@ class ProductDialog(tk.Toplevel):
             self.entries[field] = entry
 
         if self.is_edit_mode:
-            self.entries["Nombre"].insert(0, self.producto[1])
-            self.entries["Descripción"].insert(0, self.producto[2])
-            self.entries["Precio Venta"].insert(0, self.producto[3].replace('$', ''))
-            self.entries["Stock"].insert(0, self.producto[4])
+            self.entries["Nombre"].insert(0, self.producto[2])
+            self.entries["Descripción"].insert(0, self.producto[3])
+            self.entries["Precio Venta"].insert(0, self.producto[4])
+            self.entries["Stock"].insert(0, self.producto[5])
 
         # --- Botones ---
         btn_frame = ttk.Frame(frame)
